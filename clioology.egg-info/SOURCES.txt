@@ -1,0 +1,8 @@
+clioology.py
+setup.py
+clioology.egg-info/PKG-INFO
+clioology.egg-info/SOURCES.txt
+clioology.egg-info/dependency_links.txt
+clioology.egg-info/entry_points.txt
+clioology.egg-info/requires.txt
+clioology.egg-info/top_level.txt
