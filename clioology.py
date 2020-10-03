@@ -77,7 +77,8 @@ class Cliology:
         
         selected_course = self.driver.find_element_by_link_text(course_names[int(choice)])
         selected_course.click()
-        assignments = self.driver.find_element_by_id("right-column-inner")
+        time.sleep(1)
+        assignments = self.driver.find_element_by_class_name("upcoming-list")
         print(assignments.text)
 
 
