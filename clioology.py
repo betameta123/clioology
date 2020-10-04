@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.chrome.options import Options
+from tqdm import tqdm
 import click
 import time
 import os
@@ -16,15 +17,13 @@ class Cliology:
     __classes = None #TODO scrape for all classes that are being taken
 
     def __init__(self, login_password):
-        #  chrome_options = Options()
-        #  chrome_options.add_argument("--headless")
-        #  chrome_options.binary_location = '/usr/bin/chromium'
-        #  options = Options()
-        #  options.headless = True
-        #  options.add_argument("--headless")
         self.driver = webdriver.Chrome()
         self.__login_email="khuang922@student.fuhsd.org"
         self.__login_password = login_password
+
+        self.course_names = [0]
+        self.assignments = {}
+        self.dates = set([])
 
         self.login()
 
@@ -62,40 +61,53 @@ class Cliology:
 
     def getzoom(self):
         pass
+
+    def getassignments(self,choice):
+        current_date = ""
+        selected_course = self.driver.find_element_by_link_text(self.course_names[int(choice)])
+        selected_course.click()
+        time.sleep(1)
+        upcoming = self.driver.find_element_by_class_name("upcoming-list")
+        upcoming_list = upcoming.text.split("\n")
     
+        for c in upcoming_list:
+            if c == "No upcoming assignments or events":
+                return
+            if re.match('\w+, \w+ [0-9]+, [0-9]+', c):
+                self.dates.add(c)
+                current_date = c
+                self.assignments[current_date] = []
+            else:
+                if bool(self.assignments):
+                    self.assignments[current_date].append(c)
+
+
     def assignmentchoice(self):
         i = 1
-        course_names = [0]
-        assignments = {}
-        dates = set([])
-        current_date = ""
+        current_date = " "
 
         courses = self.driver.find_elements_by_class_name("sections-list") 
         for c in courses:
-            course_names.append(c.text)
+            self.course_names.append(c.text)
             print("[{}]: {}".format(i, c.text))
             i += 1
 
         print("[a]ll")
         choice = input("Your course number> ")
         print("\n")
-        
-        selected_course = self.driver.find_element_by_link_text(course_names[int(choice)])
-        selected_course.click()
-        time.sleep(1)
-        upcoming = self.driver.find_element_by_class_name("upcoming-list")
-        upcoming_list = upcoming.text.split("\n")
-        for c in upcoming_list:
-            if re.match('\w+, \w+ [0-9]+, [0-9]+', c):
-                dates.add(c)
-                current_date = c
-            else:
-                assignments[current_date] = []
-                assignments[current_date].append(c)
+        if choice.upper() == "A":
+            for c in tqdm(range(1,i), ncols=i+20):
+                self.getassignments(c)
+                self.driver.back()
 
-        for d in assignments.keys():
-           for a in assignments[d]:
-              print("{}\n    {}".format(d,a))
+        elif int(choice) <= i and int(choice) > 0:
+            self.getassignments(choice) 
+
+        for d in self.assignments.keys():
+            print("{}".format(d))
+ 
+            for a in self.assignments[d]:
+              print("    {}\n".format(a))
 
     def getgrades(self):
         pass
