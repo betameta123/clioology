@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 import click
 import time
 import os
+import re
 
 class Cliology:
     __login_email = None #TODO make this into an argument with click
@@ -62,25 +63,39 @@ class Cliology:
     def getzoom(self):
         pass
     
-    def getassignments(self):
+    def assignmentchoice(self):
         i = 1
         course_names = [0]
-        
+        assignments = {}
+        dates = set([])
+        current_date = ""
+
         courses = self.driver.find_elements_by_class_name("sections-list") 
         for c in courses:
             course_names.append(c.text)
             print("[{}]: {}".format(i, c.text))
             i += 1
 
+        print("[a]ll")
         choice = input("Your course number> ")
         print("\n")
         
         selected_course = self.driver.find_element_by_link_text(course_names[int(choice)])
         selected_course.click()
         time.sleep(1)
-        assignments = self.driver.find_element_by_class_name("upcoming-list")
-        print(assignments.text)
+        upcoming = self.driver.find_element_by_class_name("upcoming-list")
+        upcoming_list = upcoming.text.split("\n")
+        for c in upcoming_list:
+            if re.match('\w+, \w+ [0-9]+, [0-9]+', c):
+                dates.add(c)
+                current_date = c
+            else:
+                assignments[current_date] = []
+                assignments[current_date].append(c)
 
+        for d in assignments.keys():
+           for a in assignments[d]:
+              print("{}\n    {}".format(d,a))
 
     def getgrades(self):
         pass
@@ -101,7 +116,7 @@ class Cliology:
         if 'Z' == choice.upper() or 'ZOOM' == choice.upper():
             self.getzoom()
         elif 'A' == choice.upper() or 'ASSIGNMENTS' == choice.upper():
-            self.getassignments()
+            self.assignmentchoice()
         elif 'G' == choice.upper() or 'GRADES' == choice.upper():
             self.getgrades()
         elif 'H' == choice.upper() or 'HELP' == choice.upper():
